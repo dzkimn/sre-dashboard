@@ -6,7 +6,8 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 import uvicorn
 import os
 import requests
-import pandas as pd
+import os
+import requests
 import io
 from datetime import datetime
 from pydantic import BaseModel
@@ -53,60 +54,72 @@ class ReportData(BaseModel):
 # =============================================
 def read_db():
     if not APPS_SCRIPT_URL:
-        return pd.DataFrame()
+        return []
     try:
         response = requests.get(APPS_SCRIPT_URL, timeout=10)
         if response.status_code == 200:
             data = response.json()
             if data and isinstance(data, list):
-                return pd.DataFrame(data)
+                return data
     except Exception as e:
         print("Error fetching from Google Sheets:", e)
-    return pd.DataFrame()
+    return []
 
 # =============================================
 # ROUTES HALAMAN
 # =============================================
 @app.get("/")
 async def dashboard(request: Request):
-    df = read_db()
+    data = read_db()
     competitions = []
     notifications = []
     stats = {"total": 0, "selesai": 0, "berlangsung": 0, "persiapan": 0}
 
-    if not df.empty:
-        # Konversi tanggal, abaikan error
-        df['Tanggal Laporan'] = pd.to_datetime(df['Tanggal Laporan'], errors='coerce')
-        df_sorted = df.sort_values(by='Tanggal Laporan', ascending=False)
-        
+    if data:
         # Isi nilai kolom yang mungkin belum ada (agar tidak crash di template)
-        for col in ['PIC', 'Status Kompetisi', 'Progres Persiapan (%)', 'Progres Berlangsung (%)', 'Progres Selesai (%)', 'Target Minggu Ini', 'Realisasi', 'Rencana Minggu Depan']:
-            if col not in df_sorted.columns:
-                df_sorted[col] = 'Berlangsung' if col == 'Status Kompetisi' else ('-' if col == 'PIC' else 0)
+        default_cols = {
+            'PIC': '-', 'Status Kompetisi': 'Berlangsung', 
+            'Progres Persiapan (%)': 0, 'Progres Berlangsung (%)': 0, 
+            'Progres Selesai (%)': 0, 'Target Minggu Ini': '-', 
+            'Realisasi': '-', 'Rencana Minggu Depan': '-'
+        }
         
-        competitions = df_sorted.head(10).to_dict('records')
+        cleaned_data = []
+        for row in data:
+            for col, def_val in default_cols.items():
+                if col not in row or row[col] is None or row[col] == "":
+                    row[col] = def_val
+            cleaned_data.append(row)
+        
+        # Sort data by Date descending
+        def get_date(item):
+            try:
+                # Handle ISO format dates from Apps Script (e.g. 2026-05-12T17:00:00.000Z)
+                t_str = str(item.get('Tanggal Laporan', '')).split('T')[0]
+                return datetime.strptime(t_str, "%Y-%m-%d")
+            except:
+                return datetime.min
+                
+        df_sorted = sorted(cleaned_data, key=get_date, reverse=True)
+        competitions = df_sorted[:10]
 
-        stats["total"] = len(df)
-        try:
-            if 'Status Kompetisi' in df.columns:
-                stats["selesai"]     = int((df['Status Kompetisi'] == 'Selesai').sum())
-                stats["berlangsung"] = int((df['Status Kompetisi'] == 'Berlangsung').sum())
-                stats["persiapan"]   = int((df['Status Kompetisi'] == 'Persiapan').sum())
-        except Exception:
-            pass
+        stats["total"] = len(cleaned_data)
+        stats["selesai"] = sum(1 for x in cleaned_data if x.get('Status Kompetisi') == 'Selesai')
+        stats["berlangsung"] = sum(1 for x in cleaned_data if x.get('Status Kompetisi') == 'Berlangsung')
+        stats["persiapan"] = sum(1 for x in cleaned_data if x.get('Status Kompetisi') == 'Persiapan')
 
         today = datetime.now()
-        for _, row in df.iterrows():
+        for row in cleaned_data:
             try:
-                tgl = pd.to_datetime(row['Tanggal Laporan'], errors='coerce')
-                if pd.notna(tgl):
-                    diff = (tgl - today).days
-                    if 0 <= diff <= 7:
-                        notifications.append({
-                            "title": "⚠️ Deadline Mendekat!",
-                            "msg": f"{row.get('Program', '?')} - {row.get('PIC', '-')} | {diff} hari lagi",
-                            "type": "warning"
-                        })
+                t_str = str(row.get('Tanggal Laporan', '')).split('T')[0]
+                tgl = datetime.strptime(t_str, "%Y-%m-%d")
+                diff = (tgl - today).days
+                if 0 <= diff <= 7:
+                    notifications.append({
+                        "title": "⚠️ Deadline Mendekat!",
+                        "msg": f"{row.get('Program', '?')} - {row.get('PIC', '-')} | {diff} hari lagi",
+                        "type": "warning"
+                    })
             except Exception:
                 pass
 
@@ -176,14 +189,20 @@ async def export_laporan():
 @app.get("/api/export_laporan_sop")
 async def export_laporan_sop():
     """Generate halaman HTML yang siap di-print/PDF sesuai format SOP weekly report."""
-    df = read_db()
+    data = read_db()
     rows_html = ""
-    if df.empty:
+    if not data:
         rows_html = "<tr><td colspan='8' style='text-align:center;padding:20px;color:#999;'>Belum ada data laporan.</td></tr>"
     else:
-        df['Tanggal Laporan'] = pd.to_datetime(df['Tanggal Laporan'], errors='coerce')
-        df = df.sort_values(by='Tanggal Laporan', ascending=False)
-        for i, (_, row) in enumerate(df.iterrows(), 1):
+        def get_date(item):
+            try:
+                t_str = str(item.get('Tanggal Laporan', '')).split('T')[0]
+                return datetime.strptime(t_str, "%Y-%m-%d")
+            except:
+                return datetime.min
+                
+        df_sorted = sorted(data, key=get_date, reverse=True)
+        for i, row in enumerate(df_sorted, 1):
             p_persiapan   = row.get('Progres Persiapan (%)', 0)
             p_berlangsung = row.get('Progres Berlangsung (%)', 0)
             p_selesai     = row.get('Progres Selesai (%)', 0)
@@ -192,7 +211,7 @@ async def export_laporan_sop():
                 <td>{i}</td>
                 <td><b>{row.get('Program','-')}</b></td>
                 <td>{row.get('PIC','-')}</td>
-                <td>{str(row.get('Tanggal Laporan','-'))[:10]}</td>
+                <td>{str(row.get('Tanggal Laporan','-')).split('T')[0]}</td>
                 <td>
                     <div style='font-size:11px;'>Persiapan: <b>{p_persiapan}%</b></div>
                     <div style='font-size:11px;'>Berlangsung: <b>{p_berlangsung}%</b></div>
