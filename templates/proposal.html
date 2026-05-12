@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        sre: {
+                            50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 
+                            600: '#16a34a', 700: '#15803d', 900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f8fafc; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+        .ai-shimmer {
+            background: linear-gradient(90deg, #16a34a 0%, #3b82f6 50%, #16a34a 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shimmer 2s linear infinite;
+        }
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-sans text-slate-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+        <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-sre-400 to-sre-600 flex items-center justify-center font-bold text-xl shadow-lg">
+                <i class="fa-solid fa-leaf text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold tracking-wider">SRE TEL-U</h1>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Kompetisi</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="/" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
+                <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                <span class="font-medium">Dashboard</span>
+            </a>
+            <a href="/reporting" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
+                <i class="fa-solid fa-file-signature w-5 text-center"></i>
+                <span class="font-medium">Smart Reporting</span>
+            </a>
+            <a href="/proposal" class="flex items-center gap-3 px-4 py-3 bg-sre-600 text-white rounded-xl transition-colors shadow-md shadow-sre-600/20">
+                <i class="fa-solid fa-robot w-5 text-center"></i>
+                <span class="font-medium">AI Proposal</span>
+            </a>
+            <a href="/surattugas" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
+                <i class="fa-solid fa-file-contract w-5 text-center"></i>
+                <span class="font-medium">Surat Tugas</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-10 px-8 py-5">
+            <h2 class="text-2xl font-bold text-slate-800">AI Proposal Generator <i class="fa-solid fa-wand-magic-sparkles text-blue-500 ml-2"></i></h2>
+            <p class="text-sm text-slate-500">Buat latar belakang dan tujuan secara otomatis dengan kekuatan Gemini AI.</p>
+        </header>
+
+        <div class="p-8 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Form Input -->
+            <div class="space-y-6">
+                <!-- Quick Templates (Bypass AI) -->
+                <div class="glass-card p-4 rounded-2xl">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">Quick Templates (Bypass AI)</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="fillTemplate('pkm')" class="text-xs bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-medium hover:bg-blue-100 transition-all">🚀 PKM Inovasi</button>
+                        <button onclick="fillTemplate('hackathon')" class="text-xs bg-purple-50 text-purple-600 px-3 py-2 rounded-lg font-medium hover:bg-purple-100 transition-all">💻 Hackathon</button>
+                        <button onclick="fillTemplate('lkti')" class="text-xs bg-amber-50 text-amber-600 px-3 py-2 rounded-lg font-medium hover:bg-amber-100 transition-all">📝 LKTI Energi</button>
+                    </div>
+                </div>
+
+                <form id="proposalForm" class="glass-card p-6 rounded-2xl space-y-5 h-fit">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Nama Kompetisi</label>
+                    <input type="text" id="kompetisi" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sre-500 outline-none" placeholder="Contoh: Lomba Inovasi Energi Terbarukan" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Tujuan Kompetisi (Beri AI konteks)</label>
+                    <textarea id="tujuan_konteks" rows="2" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sre-500 outline-none" placeholder="Contoh: Menguji purwarupa panel surya dan meningkatkan skill mahasiswa" required></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Pilih Tim Delegasi</label>
+                    <select id="tim" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sre-500 outline-none text-slate-700">
+                        <option value="">-- Auto-populate dari Database --</option>
+                        <option value="Tim Alpha (Agsel, Otniel)">Tim Alpha (Agsel, Otniel)</option>
+                        <option value="Tim Beta (Abdur, Dika)">Tim Beta (Abdur, Dika)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Total Anggaran (Rp)</label>
+                    <input type="number" id="anggaran" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sre-500 outline-none" placeholder="2000000">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="submitBtn" class="w-full bg-slate-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/30 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-sparkles" id="submitIcon"></i>
+                        <span id="submitText">Generate dengan AI</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Preview/Output Area -->
+            <div class="glass-card p-6 rounded-2xl flex flex-col">
+                <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-file-word text-blue-600 text-xl"></i>
+                        Live Preview Proposal
+                    </h3>
+                    <button class="text-sm bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md font-medium hover:bg-blue-100 transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i> Download Word
+                    </button>
+                </div>
+                
+                <div class="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-6 overflow-y-auto text-sm text-slate-700 space-y-4">
+                    <div class="text-center font-bold text-lg mb-6 text-black uppercase">
+                        PROPOSAL KEGIATAN KOMPETISI<br>
+                        SOCIETY OF RENEWABLE ENERGY (SRE)<br>
+                        TELKOM UNIVERSITY
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-black mb-1">A. Latar Belakang</h4>
+                        <div id="latar_belakang_preview" class="text-slate-700 bg-slate-100 p-3 rounded border border-slate-200">
+                            <i class="text-slate-400">[ Latar belakang akan di-generate otomatis oleh AI dengan bahasa formal organisasi di sini... ]</i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-black mb-1">B. Tujuan Kegiatan</h4>
+                        <div id="tujuan_preview" class="text-slate-700 bg-slate-100 p-3 rounded border border-slate-200 ml-4">
+                            <i class="text-slate-400">[ Tujuan dan manfaat spesifik akan disusun dalam bentuk poin-poin oleh AI... ]</i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-black mb-1">C. Susunan Tim Delegasi</h4>
+                        <table class="w-full border-collapse mt-2 text-sm">
+                            <tr class="bg-slate-200"><th class="border border-slate-300 p-2 text-left">Nama / Role</th></tr>
+                            <tr><td id="tim_preview" class="border border-slate-300 p-2 italic text-slate-400">[ Auto-populate dari form pemilihan tim... ]</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.getElementById('proposalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const kompetisi = document.getElementById('kompetisi').value;
+            const tujuan_konteks = document.getElementById('tujuan_konteks').value;
+            const tim = document.getElementById('tim').value;
+            const anggaran = document.getElementById('anggaran').value;
+            
+            const btn = document.getElementById('submitBtn');
+            const btnIcon = document.getElementById('submitIcon');
+            const btnText = document.getElementById('submitText');
+            
+            // UI Loading state
+            btn.disabled = true;
+            btn.classList.replace('bg-slate-900', 'bg-slate-500');
+            btnIcon.classList.replace('fa-sparkles', 'fa-spinner');
+            btnIcon.classList.add('fa-spin');
+            btnText.innerText = 'Generating...';
+            
+            // Update simple preview immediately
+            document.getElementById('tim_preview').innerText = tim || '[ Belum dipilih ]';
+            document.getElementById('tim_preview').classList.remove('italic', 'text-slate-400');
+            
+            document.getElementById('latar_belakang_preview').innerHTML = '<div class="ai-shimmer font-bold">Sedang menyusun latar belakang...</div>';
+            document.getElementById('tujuan_preview').innerHTML = '<div class="ai-shimmer font-bold">Merumuskan tujuan...</div>';
+
+            try {
+                const response = await fetch('/api/generate_proposal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        kompetisi: kompetisi,
+                        tujuan_konteks: tujuan_konteks,
+                        tim: tim,
+                        anggaran: anggaran
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if(data.status === 'success') {
+                    document.getElementById('latar_belakang_preview').innerHTML = `<p class="whitespace-pre-line">${data.latar_belakang}</p>`;
+                    document.getElementById('tujuan_preview').innerHTML = data.tujuan;
+                } else {
+                    alert('Gagal: ' + data.message);
+                    document.getElementById('latar_belakang_preview').innerHTML = `<span class="text-red-500">${data.message}</span>`;
+                    document.getElementById('tujuan_preview').innerHTML = '';
+                }
+                
+            } catch (error) {
+                console.error(error);
+                alert('Terjadi kesalahan koneksi.');
+            } finally {
+                // Restore UI
+                btn.disabled = false;
+                btn.classList.replace('bg-slate-500', 'bg-slate-900');
+                btnIcon.classList.remove('fa-spin');
+                btnIcon.classList.replace('fa-spinner', 'fa-sparkles');
+                btnText.innerText = 'Generate dengan AI';
+            }
+        });
+
+        function fillTemplate(type) {
+            const templates = {
+                'pkm': {
+                    kompetisi: 'Program Kreativitas Mahasiswa (PKM) - Inovasi Energi',
+                    tujuan: 'Mengembangkan purwarupa sistem manajemen energi berbasis IoT.',
+                    latar: 'SRE Telkom University sebagai organisasi yang berfokus pada energi terbarukan memiliki tanggung jawab untuk mendorong inovasi mahasiswa. Melalui PKM ini, kami bertujuan menjawab tantangan efisiensi energi nasional.',
+                    poin: '<ul><li>Menghasilkan publikasi ilmiah tingkat nasional</li><li>Meningkatkan skill teknis anggota SRE</li><li>Membangun networking antar universitas</li></ul>'
+                },
+                'hackathon': {
+                    kompetisi: 'National Energy Hackathon 2026',
+                    tujuan: 'Membangun platform digital untuk distribusi energi terbarukan.',
+                    latar: 'Digitalisasi energi adalah masa depan. SRE Telkom University ingin mengambil peran dalam transformasi digital melalui partisipasi aktif di Hackathon ini untuk menciptakan solusi software yang berkelanjutan.',
+                    poin: '<ul><li>Memenangkan juara utama kategori Green Tech</li><li>Mendapatkan validasi ide dari pakar industri</li><li>Meningkatkan visibilitas SRE Tel-U di level nasional</li></ul>'
+                },
+                'lkti': {
+                    kompetisi: 'Lomba Karya Tulis Ilmiah (LKTI) Energi Nasional',
+                    tujuan: 'Menyusun kajian strategis tentang potensi hidrogen hijau di Indonesia.',
+                    latar: 'Kajian akademis yang kuat diperlukan untuk mendukung kebijakan energi transisi. Partisipasi SRE Tel-U dalam LKTI ini adalah bentuk kontribusi nyata dalam penyediaan data dan analisis teknis bagi masa depan energi Indonesia.',
+                    poin: '<ul><li>Menyelesaikan riset mendalam tentang teknologi baru</li><li>Melatih kemampuan menulis kritis anggota</li><li>Mempublikasikan hasil kajian di jurnal universitas</li></ul>'
+                }
+            };
+
+            const data = templates[type];
+            document.getElementById('kompetisi').value = data.kompetisi;
+            document.getElementById('tujuan_konteks').value = data.tujuan;
+            document.getElementById('latar_belakang_preview').innerHTML = `<p>${data.latar}</p>`;
+            document.getElementById('tujuan_preview').innerHTML = data.poin;
+            document.getElementById('tim_preview').innerText = "Tim Delegasi SRE";
+            
+            // Efek kilat sukses
+            const card = document.getElementById('latar_belakang_preview').parentElement.parentElement;
+            card.classList.add('ring-2', 'ring-sre-500');
+            setTimeout(() => card.classList.remove('ring-2', 'ring-sre-500'), 1000);
+        }
+    </script>
+</body>
+</html>

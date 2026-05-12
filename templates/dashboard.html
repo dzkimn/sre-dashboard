@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { sre: { 50:'#f0fdf4', 100:'#dcfce7', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 900:'#14532d' } } } }
+        }
+    </script>
+    <style>
+        body { background-color: #f8fafc; }
+        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px 0 rgba(31,38,135,0.05); }
+        .progress-ring { transition: all 0.4s ease; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-sans text-slate-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex flex-shrink-0">
+        <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-xl shadow-lg">
+                <i class="fa-solid fa-leaf text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold tracking-wider">SRE TEL-U</h1>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Kompetisi</p>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <a href="/" class="flex items-center gap-3 px-4 py-3 bg-sre-600 text-white rounded-xl shadow-md">
+                <i class="fa-solid fa-chart-pie w-5 text-center"></i><span class="font-medium">Dashboard</span>
+            </a>
+            <a href="/reporting" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
+                <i class="fa-solid fa-file-signature w-5 text-center"></i><span class="font-medium">Smart Reporting</span>
+            </a>
+            <a href="/proposal" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
+                <i class="fa-solid fa-robot w-5 text-center"></i><span class="font-medium">AI Proposal</span>
+            </a>
+            <a href="/surattugas" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
+                <i class="fa-solid fa-file-contract w-5 text-center"></i><span class="font-medium">Surat Tugas</span>
+            </a>
+            <div class="pt-4 mt-4 border-t border-slate-800 space-y-1">
+                <p class="text-xs text-slate-500 uppercase tracking-widest px-4 mb-2">Database</p>
+                <a href="/api/export_laporan" class="flex items-center gap-3 px-4 py-3 text-emerald-400 hover:bg-slate-800 rounded-xl transition-colors">
+                    <i class="fa-solid fa-file-csv w-5 text-center"></i><span class="font-medium text-sm">Export ke Excel</span>
+                </a>
+                <a href="/api/export_laporan_sop" target="_blank" class="flex items-center gap-3 px-4 py-3 text-blue-400 hover:bg-slate-800 rounded-xl transition-colors">
+                    <i class="fa-solid fa-print w-5 text-center"></i><span class="font-medium text-sm">Cetak Laporan SOP</span>
+                </a>
+            </div>
+        </nav>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=Director&background=1e293b&color=fff" class="w-10 h-10 rounded-full" alt="User">
+                <div>
+                    <p class="font-medium text-sm">Dzaki</p>
+                    <p class="text-xs text-slate-400">Director Ev & Comp</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <!-- Top Header -->
+        <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-10 px-8 py-4 flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">Monitoring & Analytics</h2>
+                <p class="text-xs text-slate-500">SRE Telkom University — Data langsung dari database laporan</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Notification Bell -->
+                <div class="relative group">
+                    <button class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        {% if notifications %}
+                        <span class="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white text-white text-[9px] flex items-center justify-center font-bold">{{ notifications|length }}</span>
+                        {% endif %}
+                    </button>
+                    <div class="absolute right-0 mt-1 w-80 bg-white rounded-xl shadow-2xl border border-slate-100 hidden group-hover:block z-50">
+                        <div class="p-4 border-b"><h4 class="font-bold text-sm">🔔 Notifikasi SOP</h4></div>
+                        <div class="p-2 max-h-64 overflow-y-auto space-y-1">
+                            {% for n in notifications %}
+                            <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                                <p class="text-xs font-bold text-amber-800">{{ n.title }}</p>
+                                <p class="text-[11px] text-amber-700 mt-1">{{ n.msg }}</p>
+                            </div>
+                            {% else %}
+                            <p class="text-xs text-slate-400 text-center py-6">✅ Semua laporan on-track!</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <a href="/api/export_laporan_sop" target="_blank" class="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors shadow">
+                    <i class="fa-solid fa-print"></i> Cetak Laporan
+                </a>
+                <a href="/api/export_laporan" class="flex items-center gap-2 bg-sre-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sre-700 transition-colors shadow">
+                    <i class="fa-solid fa-download"></i> Export CSV
+                </a>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl mx-auto w-full space-y-6">
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-slate-800">
+                    <p class="text-xs font-medium text-slate-400 mb-1">Total Kompetisi</p>
+                    <h3 class="text-3xl font-bold text-slate-800">{{ stats.total }}</h3>
+                    <p class="text-xs text-slate-500 mt-2 flex items-center gap-1"><i class="fa-solid fa-layer-group"></i> Semua Program</p>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-amber-500">
+                    <p class="text-xs font-medium text-slate-400 mb-1">Dalam Persiapan</p>
+                    <h3 class="text-3xl font-bold text-amber-500">{{ stats.persiapan }}</h3>
+                    <p class="text-xs text-amber-600 mt-2 flex items-center gap-1"><i class="fa-solid fa-clock"></i> Menunggu Jadwal</p>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-blue-500">
+                    <p class="text-xs font-medium text-slate-400 mb-1">Sedang Berlangsung</p>
+                    <h3 class="text-3xl font-bold text-blue-500">{{ stats.berlangsung }}</h3>
+                    <p class="text-xs text-blue-600 mt-2 flex items-center gap-1"><i class="fa-solid fa-spinner fa-spin-slow"></i> On Progress</p>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-emerald-500">
+                    <p class="text-xs font-medium text-slate-400 mb-1">Program Selesai</p>
+                    <h3 class="text-3xl font-bold text-emerald-500">{{ stats.selesai }}</h3>
+                    <p class="text-xs text-emerald-600 mt-2 flex items-center gap-1"><i class="fa-solid fa-check-double"></i> Finished</p>
+                </div>
+            </div>
+
+            <!-- Main Table: Data dari Database -->
+            <div class="glass-card rounded-2xl">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">📋 Rekap Laporan Kompetisi (Terbaru)</h3>
+                    <span class="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{{ competitions|length }} data tampil</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr class="text-xs text-slate-500 uppercase tracking-wider">
+                                <th class="py-3 px-4">Program / Kompetisi</th>
+                                <th class="py-3 px-4">PIC</th>
+                                <th class="py-3 px-4">Tgl Laporan</th>
+                                <th class="py-3 px-4">Persiapan</th>
+                                <th class="py-3 px-4">Berlangsung</th>
+                                <th class="py-3 px-4">Selesai</th>
+                                <th class="py-3 px-4">Target Minggu Ini</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comp in competitions %}
+                            <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                <td class="py-3 px-4 font-semibold text-slate-800">{{ comp.get('Program', '-') }}</td>
+                                <td class="py-3 px-4 text-slate-600">
+                                    <span class="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full text-xs font-medium">
+                                        <i class="fa-solid fa-user-tie text-slate-400 text-[10px]"></i> {{ comp.get('PIC', '-') }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-slate-500">{{ str(comp.get('Tanggal Laporan', '-'))[:10] }}</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-16 bg-slate-100 rounded-full h-1.5"><div class="bg-amber-400 h-1.5 rounded-full" style="width:{{ comp.get('Progres Persiapan (%)', 0) }}%"></div></div>
+                                        <span class="text-xs font-bold text-amber-600">{{ comp.get('Progres Persiapan (%)', 0) }}%</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-16 bg-slate-100 rounded-full h-1.5"><div class="bg-blue-400 h-1.5 rounded-full" style="width:{{ comp.get('Progres Berlangsung (%)', 0) }}%"></div></div>
+                                        <span class="text-xs font-bold text-blue-600">{{ comp.get('Progres Berlangsung (%)', 0) }}%</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-16 bg-slate-100 rounded-full h-1.5"><div class="bg-emerald-500 h-1.5 rounded-full" style="width:{{ comp.get('Progres Selesai (%)', 0) }}%"></div></div>
+                                        <span class="text-xs font-bold text-emerald-600">{{ comp.get('Progres Selesai (%)', 0) }}%</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-slate-600 max-w-xs truncate">{{ comp.get('Target Minggu Ini', '-') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="py-16 text-center">
+                                    <i class="fa-solid fa-inbox text-3xl text-slate-200 mb-3 block"></i>
+                                    <p class="text-slate-400 font-medium">Belum ada data laporan.</p>
+                                    <a href="/reporting" class="text-sre-600 text-sm hover:underline mt-1 inline-block">→ Isi Laporan Pertama</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>
